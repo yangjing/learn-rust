@@ -36,33 +36,51 @@ pub fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
   })
 }
 
-enum FieldType {
+pub enum FieldType {
   Plain(Type),
   Optional(Type),
 }
 
-struct BuilderField {
-  ident: Ident,
-  ty: FieldType,
+pub struct BuilderField {
+  pub ident: Ident,
+  pub ty: FieldType,
 }
 
 impl BuilderField {
   fn new(ident: Ident, ty: FieldType) -> Self {
     BuilderField { ident, ty }
   }
+}
 
-  fn try_from(field: &Field) -> syn::Result<Self> {
+impl TryFrom<&Field> for BuilderField {
+  type Error = syn::Error;
+
+  /// 此函数主要用于解析给定的`Field`，并根据其类型创建一个`BuilderField`实例。
+  /// 如果`Field`的类型是`Option<T>`，则会特别处理，以支持可选字段。
+  ///
+  /// # Parameters
+  /// - `field`: &Field - 对一个字段的引用，包含字段的标识符和类型等信息。
+  ///
+  /// # Returns
+  /// - `syn::Result<Self>` - 返回一个结果类型，如果成功，将包含创建的`BuilderField`实例。
+  fn try_from(field: &Field) -> core::result::Result<Self, Self::Error> {
+    // 克隆字段的标识符，用于后续创建`BuilderField`。
     let ident = field.ident.clone().unwrap();
 
+    // 检查字段的类型是否为`Type::Path`，这是支持类型解析的前提。
     if let Type::Path(ty) = &field.ty {
+      // 获取类型路径的最后一个段，这是实际类型信息所在的位置。
       if let Some(segment) = ty.path.segments.last() {
+        // 检查是否为`Option`类型，以决定字段的处理方式。
         if segment.ident == "Option" {
+          // 提取`Option`内部的类型，并创建一个`BuilderField`，将其类型标记为可选。
           let inner_ty = extract_inner_ty(&segment.arguments)?;
           return Ok(BuilderField::new(ident, FieldType::Optional(inner_ty.clone())));
         }
       }
     }
 
+    // 如果字段类型不是`Option`，则直接创建一个`BuilderField`，将其类型标记为普通类型。
     Ok(BuilderField::new(ident, FieldType::Plain(field.ty.clone())))
   }
 }

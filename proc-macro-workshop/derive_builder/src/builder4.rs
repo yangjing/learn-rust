@@ -1,7 +1,8 @@
-use crate::helper::{extract_inner_ty, extract_struct_fields};
+use crate::builder3::{BuilderField, FieldType};
+use crate::helper::extract_struct_fields;
 use proc_macro2::{Ident, Span, TokenStream as TokenStream2};
 use quote::quote;
-use syn::{DeriveInput, Field, Type, Visibility};
+use syn::{DeriveInput, Visibility};
 
 pub fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
   let vis = &input.vis;
@@ -36,37 +37,6 @@ pub fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
       #build_fn
     }
   })
-}
-
-enum FieldType {
-  Plain(Type),
-  Optional(Type),
-}
-
-struct BuilderField {
-  ident: Ident,
-  ty: FieldType,
-}
-
-impl BuilderField {
-  fn new(ident: Ident, ty: FieldType) -> Self {
-    BuilderField { ident, ty }
-  }
-
-  fn try_from(field: &Field) -> syn::Result<Self> {
-    let ident = field.ident.clone().unwrap();
-
-    if let Type::Path(ty) = &field.ty {
-      if let Some(segment) = ty.path.segments.last() {
-        if segment.ident == "Option" {
-          let inner_ty = extract_inner_ty(&segment.arguments)?;
-          return Ok(BuilderField::new(ident, FieldType::Optional(inner_ty.clone())));
-        }
-      }
-    }
-
-    Ok(BuilderField::new(ident, FieldType::Plain(field.ty.clone())))
-  }
 }
 
 fn make_storage(fields: &[BuilderField]) -> TokenStream2 {
@@ -153,7 +123,7 @@ fn make_build_fn(vis: &Visibility, input_ident: &Ident, fields: &[BuilderField])
 
   // 生成并返回完整的构建函数代码
   quote! {
-    #vis fn build(mut self) -> Result<#input_ident, Box<dyn core::error::Error>> {
+    #vis fn build(self) -> Result<#input_ident, Box<dyn core::error::Error>> {
       #(#required_field_checks)*
 
       Ok(#input_ident {

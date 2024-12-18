@@ -1,7 +1,8 @@
-use crate::helper::{extract_inner_ty, extract_struct_fields};
+use crate::builder3::{BuilderField, FieldType};
+use crate::helper::extract_struct_fields;
 use proc_macro2::{Ident, Span, TokenStream as TokenStream2};
 use quote::quote;
-use syn::{DeriveInput, Field, Type, Visibility};
+use syn::{DeriveInput, Visibility};
 
 pub fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
   let vis = &input.vis;
@@ -36,37 +37,6 @@ pub fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
       #build_fn
     }
   })
-}
-
-enum FieldType {
-  Plain(Type),
-  Optional(Type),
-}
-
-struct BuilderField {
-  ident: Ident,
-  ty: FieldType,
-}
-
-impl BuilderField {
-  fn new(ident: Ident, ty: FieldType) -> Self {
-    BuilderField { ident, ty }
-  }
-
-  fn try_from(field: &Field) -> syn::Result<Self> {
-    let ident = field.ident.clone().unwrap();
-
-    if let Type::Path(ty) = &field.ty {
-      if let Some(segment) = ty.path.segments.last() {
-        if segment.ident == "Option" {
-          let inner_ty = extract_inner_ty(&segment.arguments)?;
-          return Ok(BuilderField::new(ident, FieldType::Optional(inner_ty.clone())));
-        }
-      }
-    }
-
-    Ok(BuilderField::new(ident, FieldType::Plain(field.ty.clone())))
-  }
 }
 
 fn make_storage(fields: &[BuilderField]) -> TokenStream2 {
@@ -115,7 +85,18 @@ fn make_setters(vis: &Visibility, fields: &[BuilderField]) -> TokenStream2 {
     .collect()
 }
 
+/// 此函数用于动态生成一个构建器的build方法，该方法负责将构建器的当前状态转换为所需类型的实例。
+/// 它会检查所有必需的字段是否已设置，并将所有字段（包括可选字段）适当地赋值给新创建的实例
+///
+/// # Parameters
+/// - `vis`: 指定生成函数的可见性，例如`pub`或私有
+/// - `input_ident`: 要构建的对象的类型标识符
+/// - `fields`: 包含构建器所有字段信息的向量，用于生成字段检查和赋值代码
+///
+/// # Returns
+/// - 生成的build函数的令牌流，可以用于构建指定类型的实例
 fn make_build_fn(vis: &Visibility, input_ident: &Ident, fields: &[BuilderField]) -> TokenStream2 {
+  // 遍历所有字段，为每个非可选字段生成检查代码，确保它们在构建之前已被设置
   let required_field_checks = fields.iter().filter_map(|field| {
     let ident = &field.ident;
     match &field.ty {
@@ -128,6 +109,7 @@ fn make_build_fn(vis: &Visibility, input_ident: &Ident, fields: &[BuilderField])
     }
   });
 
+  // 为所有字段生成赋值代码，将构建器的字段值赋给新创建的对象
   let field_assignment = fields.iter().map(|field| {
     let ident = &field.ident;
     let expr = match &field.ty {
@@ -139,6 +121,7 @@ fn make_build_fn(vis: &Visibility, input_ident: &Ident, fields: &[BuilderField])
     }
   });
 
+  // 生成并返回完整的build函数的令牌流
   quote! {
     #vis fn build(&mut self) -> Result<#input_ident, Box<dyn core::error::Error>> {
       #(#required_field_checks)*

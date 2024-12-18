@@ -50,4 +50,5 @@ fn main() {
 
   assert_eq!(command.executable, "cargo");
   assert_eq!(command.args, vec!["build", "--release"]);
+  assert!(command.current_dir.is_none());
 }

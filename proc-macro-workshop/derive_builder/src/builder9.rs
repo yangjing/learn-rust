@@ -1,7 +1,8 @@
-use crate::helper::{extract_inner_ty, extract_struct_fields};
+use crate::builder7::{BuilderField, FieldType};
+use crate::helper::extract_struct_fields;
 use proc_macro2::{Ident, Span, TokenStream as TokenStream2};
 use quote::quote;
-use syn::{DeriveInput, Error, Field, LitStr, Meta, Type, Visibility};
+use syn::{DeriveInput, Visibility};
 
 pub fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
   let vis = &input.vis;
@@ -36,65 +37,6 @@ pub fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
       #build_fn
     }
   })
-}
-
-enum FieldType {
-  Plain(Type),
-  Optional(Type),
-  Repeated(Ident, Type),
-}
-
-struct BuilderField {
-  ident: Ident,
-  ty: FieldType,
-}
-
-impl BuilderField {
-  fn new(ident: Ident, ty: FieldType) -> Self {
-    BuilderField { ident, ty }
-  }
-
-  fn try_from(field: &Field) -> syn::Result<Self> {
-    let mut each = None::<Ident>;
-    for attr in field.attrs.iter() {
-      if !attr.path().is_ident("builder") {
-        continue;
-      }
-
-      let expected = r#"expected `builder(each = "...")`"#;
-      let meta = match &attr.meta {
-        Meta::List(meta) => meta,
-        meta => return Err(Error::new_spanned(meta, expected))
-      };
-
-      meta.parse_nested_meta(|nested| {
-        if nested.path.is_ident("each") {
-          let lit: LitStr = nested.value()?.parse()?;
-          each = Some(lit.parse()?);
-          Ok(())
-        } else {
-          Err(Error::new_spanned(meta, expected))
-        }
-      })?;
-    }
-
-    let ident = field.ident.clone().unwrap();
-
-    if let Some(each) = each {
-      return Ok(BuilderField::new(ident, FieldType::Repeated(each, field.ty.clone())));
-    }
-
-    if let Type::Path(ty) = &field.ty {
-      if let Some(segment) = ty.path.segments.last() {
-        if segment.ident == "Option" {
-          let inner_ty = extract_inner_ty(&segment.arguments)?;
-          return Ok(BuilderField::new(ident, FieldType::Optional(inner_ty.clone())));
-        }
-      }
-    }
-
-    Ok(BuilderField::new(ident, FieldType::Plain(field.ty.clone())))
-  }
 }
 
 fn make_storage(fields: &[BuilderField]) -> TokenStream2 {
@@ -159,7 +101,7 @@ fn make_build_fn(vis: &Visibility, input_ident: &Ident, fields: &[BuilderField])
     match &field.ty {
       FieldType::Plain(_) => Some(quote! {
         let #ident = self.#ident.take().ok_or_else(|| {
-          std::boxed::Box::<dyn core::error::Error>::from(#error)
+          alloc::boxed::Box::<dyn core::error::Error>::from(#error)
         })?;
       }),
       FieldType::Optional(_) | FieldType::Repeated(..) => None,
@@ -179,7 +121,7 @@ fn make_build_fn(vis: &Visibility, input_ident: &Ident, fields: &[BuilderField])
   });
 
   quote! {
-    #vis fn build(&mut self) -> core::result::Result<#input_ident, std::boxed::Box<dyn core::error::Error>> {
+    #vis fn build(&mut self) -> core::result::Result<#input_ident, alloc::boxed::Box<dyn core::error::Error>> {
       #(#required_field_checks)*
 
       Ok(#input_ident {

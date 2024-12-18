@@ -1,4 +1,4 @@
-use derive_builder::Builder4;
+use derive_builder::Builder7;
 
 #[test]
 fn tests() {
@@ -16,12 +16,11 @@ fn tests() {
 
 
 #[allow(dead_code)]
-#[derive(Builder4)]
+#[derive(Builder7)]
 pub struct Command {
   executable: String,
-  // #[builder(each = "args")]
+  #[builder(each = "arg")]
   args: Vec<String>,
-  // #[builder(each = "env")]
   env: Vec<String>,
   current_dir: Option<String>,
 }

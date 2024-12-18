@@ -53,12 +53,20 @@ pub fn derive_builder6(input: TokenStream) -> TokenStream {
   expanded.into()
 }
 
+/// 这个宏通过解析输入的结构体定义，自动生成一个builder结构体以及相关的构建方法。
+/// 使用 `attributes(builder)` 参数指定，允许使用builder属性来定制生成的行为。
+///
+/// # Parameters
+/// - `input`: 类型为TokenStream的输入，代表了要应用Builder7特性的结构体的Rust源代码。
+/// # Returns
+/// - `TokenStream`: 生成的Rust代码，包含了builder模式的实现。这个代码流可以直接编译或进一步处理。
 #[proc_macro_derive(Builder7, attributes(builder))]
 pub fn derive_builder7(input: TokenStream) -> TokenStream {
   let input = parse_macro_input!(input as DeriveInput);
   let expanded = builder7::expand(input).unwrap_or_else(|err| err.to_compile_error());
   expanded.into()
 }
+
 
 #[proc_macro_derive(Builder9, attributes(builder))]
 pub fn derive_builder9(input: TokenStream) -> TokenStream {
