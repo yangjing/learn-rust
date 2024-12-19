@@ -1,3 +1,11 @@
 [workspace]
 resolver = "2"
-members = ["proc-macro-workshop/derive_builder"]
+members = ["proc-macro-workshop/*"]
+
+[workspace.dependencies]
+syn = { version = "2.0", features = ["extra-traits"] }
+proc-macro2 = "1.0"
+quote = "1.0"
+
+# For testing
+trybuild = { version = "1.0", features = ["diff"] }

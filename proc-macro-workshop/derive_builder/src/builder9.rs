@@ -101,7 +101,7 @@ fn make_build_fn(vis: &Visibility, input_ident: &Ident, fields: &[BuilderField])
     match &field.ty {
       FieldType::Plain(_) => Some(quote! {
         let #ident = self.#ident.take().ok_or_else(|| {
-          alloc::boxed::Box::<dyn core::error::Error>::from(#error)
+          std::boxed::Box::<dyn core::error::Error>::from(#error)
         })?;
       }),
       FieldType::Optional(_) | FieldType::Repeated(..) => None,
@@ -121,7 +121,7 @@ fn make_build_fn(vis: &Visibility, input_ident: &Ident, fields: &[BuilderField])
   });
 
   quote! {
-    #vis fn build(&mut self) -> core::result::Result<#input_ident, alloc::boxed::Box<dyn core::error::Error>> {
+    #vis fn build(&mut self) -> core::result::Result<#input_ident, std::boxed::Box<dyn core::error::Error>> {
       #(#required_field_checks)*
 
       Ok(#input_ident {
