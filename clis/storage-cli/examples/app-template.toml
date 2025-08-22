@@ -1,0 +1,7 @@
+# service = "obs"
+
+[storage]
+endpoint = "obs.cn-southwest-2.myhuaweicloud.com"
+bucket = "<bucket>"
+ak = "<ahvahbahre5tae1aiy>"
+sk = "<ephooKohTh1iechapia0aem0bi2We7eeka9di3>"

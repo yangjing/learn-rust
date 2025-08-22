@@ -21,11 +21,11 @@ pub fn extract_inner_ty(arguments: &PathArguments) -> syn::Result<&Type> {
         // 如果最后一个参数是类型参数，则返回该类型
         GenericArgument::Type(inner_ty) => Ok(inner_ty),
         // 如果最后一个参数不是类型参数，则返回错误
-        arg => return Err(Error::new_spanned(arg, "unexpected generic argument"))
+        arg => return Err(Error::new_spanned(arg, "unexpected generic argument")),
       }
     }
     // 当路径参数不是尖括号包围的泛型参数时，返回错误
-    path => return Err(Error::new_spanned(path, "unexpected path arguments"))
+    path => return Err(Error::new_spanned(path, "unexpected path arguments")),
   }
 }
 
@@ -54,4 +54,3 @@ pub fn extract_struct_fields(data: Data) -> syn::Result<FieldsNamed> {
     _ => return Err(Error::new(Span::call_site(), "expected struct")),
   }
 }
-

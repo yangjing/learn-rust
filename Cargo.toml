@@ -1,11 +1,45 @@
 [workspace]
 resolver = "2"
-members = ["proc-macro-workshop/*"]
+members = ["proc-macro-workshop/*", "clis/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.89"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
 
 [workspace.dependencies]
+# -- Misc
+bytes = "1"
+clap = { version = "4.5", features = ["derive"] }
+log = "0.4"
+logforth = "0.27"
+
+# -- Macro
 syn = { version = "2.0", features = ["extra-traits"] }
 proc-macro2 = "1.0"
 quote = "1.0"
 
-# For testing
+# -- Async
+futures = "0.3"
+
+# -- Error
+anyhow = "1"
+thiserror = "1"
+
+# -- Serde
+serde = { version = "1", features = ["derive"] }
+serde_with = { version = "3", features = ["time_0_3"] }
+serde_json = { version = "1" }
+serde_repr = "0.1"
+
+# -- Test
 trybuild = { version = "1.0", features = ["diff"] }
+
+[profile.release]
+codegen-units = 1
+panic = "abort"
+strip = "debuginfo"
+lto = "thin"

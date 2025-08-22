@@ -26,4 +26,3 @@ pub fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
     }
   })
 }
-

@@ -144,4 +144,3 @@ fn make_setters(vis: &Visibility, fields: &[BuilderField]) -> TokenStream2 {
     })
     .collect()
 }
-

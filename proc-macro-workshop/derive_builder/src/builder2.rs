@@ -49,7 +49,6 @@ pub fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
   })
 }
 
-
 /// 定义字段类型枚举，用于描述字段是否可选或必填
 enum FieldType {
   /// 普通字段类型，直接包含字段的类型信息
@@ -65,7 +64,6 @@ struct BuilderField {
   /// 字段类型
   ty: FieldType,
 }
-
 
 impl BuilderField {
   fn new(ident: Ident, ty: FieldType) -> Self {
@@ -115,7 +113,6 @@ fn make_storage(fields: &[BuilderField]) -> TokenStream2 {
     // 将所有字段的定义代码合并成一个TokenStream
     .collect()
 }
-
 
 fn make_initializer(fields: &[BuilderField]) -> TokenStream2 {
   fields

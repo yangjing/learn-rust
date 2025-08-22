@@ -14,7 +14,6 @@ fn tests() {
   t.pass("tests/09-redefined-prelude-types.rs");
 }
 
-
 #[allow(dead_code)]
 #[derive(Builder7)]
 pub struct Command {

@@ -167,7 +167,7 @@ fn make_setters(vis: &Visibility, fields: &[BuilderField]) -> TokenStream2 {
       let (fn_name, arg_name, arg_ty, store) = match &field.ty {
         FieldType::Plain(ty) => (ident, ident, quote!(#ty), plain_store),
         FieldType::Optional(ty) => (ident, ident, quote!(#ty), plain_store),
-        FieldType::Repeated(each, ty) => (each, each, inner(ty), quote!(self.#ident.push(#each)))
+        FieldType::Repeated(each, ty) => (each, each, inner(ty), quote!(self.#ident.push(#each))),
       };
       quote! {
         #vis fn #fn_name(&mut self, #arg_name: #arg_ty) -> &mut Self {
@@ -206,7 +206,7 @@ fn make_build_fn(vis: &Visibility, input_ident: &Ident, fields: &[BuilderField])
     let expr = match &field.ty {
       FieldType::Plain(_) => quote!(#ident),
       FieldType::Optional(_) => quote!(self.#ident.take()),
-      FieldType::Repeated(_, ty) => quote!(core::mem::replace(&mut self.#ident, <#ty>::new()))
+      FieldType::Repeated(_, ty) => quote!(core::mem::replace(&mut self.#ident, <#ty>::new())),
     };
     // 生成字段赋值逻辑
     quote! {

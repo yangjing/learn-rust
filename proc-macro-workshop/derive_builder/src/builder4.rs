@@ -132,4 +132,3 @@ fn make_build_fn(vis: &Visibility, input_ident: &Ident, fields: &[BuilderField])
     }
   }
 }
-

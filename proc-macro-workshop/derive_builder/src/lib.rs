@@ -67,7 +67,6 @@ pub fn derive_builder7(input: TokenStream) -> TokenStream {
   expanded.into()
 }
 
-
 #[proc_macro_derive(Builder9, attributes(builder))]
 pub fn derive_builder9(input: TokenStream) -> TokenStream {
   let input = parse_macro_input!(input as DeriveInput);
